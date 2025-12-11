@@ -1,4 +1,4 @@
-<index.html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -13,28 +13,20 @@
                 extend: {
                     fontFamily: { sans: ['Noto Sans TC', 'sans-serif'] },
                     colors: {
-                        // 莫蘭迪 UI 主題 (單色調)
                         morandi: { 
-                            bg: '#f7f7fa',      // 極淺灰紫底
-                            text: '#6B6576',    // 深灰紫 (主要文字/輸入)
-                            sub: '#A9A1B9',     // 淺灰紫 (次要/裝飾)
-                            main: '#555DA9',    // 深藍紫 (標題/按鈕/滑桿)
-                            accent: '#6B6576'   // 強調色 (同文字色，保持極簡)
+                            bg: '#f7f7fa',      
+                            text: '#6B6576',    
+                            sub: '#A9A1B9',     
+                            main: '#555DA9',    
+                            accent: '#6B6576'   
                         },
-                        // 圖表專用色
-                        chart: {
-                            acc: '#7C8E7F', // 累積期 (莫蘭迪綠)
-                            dec: '#CDB895', // 提領期 (燕麥金)
-                            inf: '#9B3B3B'  // 通膨線 (深紅)
-                        },
-                        // 結果狀態色
                         status: {
-                            safe: '#7C8E7F', // 綠底
-                            danger: '#E57373' // 紅底
+                            safe: '#7C8E7F',
+                            danger: '#E57373'
                         }
                     },
                     boxShadow: {
-                        'up': '0 -4px 20px -5px rgba(0,0,0,0.1)', // 底部面板向上陰影
+                        'sticky': '0 4px 20px -5px rgba(0,0,0,0.1)', 
                     }
                 }
             }
@@ -42,42 +34,38 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* 佈局核心：鎖定視窗高度 */
-        body, html { height: 100%; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+        /* 1. 解除高度鎖定，恢復正常滾動 */
+        body, html { 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            overflow-y: auto; /* 關鍵修正：允許垂直滾動 */
+            -webkit-overflow-scrolling: touch; /* iOS 慣性滾動優化 */
+        }
         
         /* 移除輸入框箭頭 */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; appearance: none; }
         
-        /* 自定義滑桿 (莫蘭迪紫) */
-        input[type=range] { 
-            -webkit-appearance: none; appearance: none;
-            background: transparent; cursor: pointer; 
-        }
+        /* 自定義滑桿 */
+        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
             height: 18px; width: 18px; border-radius: 50%;
-            background: #786b8f; /* 主色 */
+            background: #555DA9; 
             border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
             transition: transform 0.1s; margin-top: -7px;
         }
         input[type=range]:active::-webkit-slider-thumb { transform: scale(1.1); }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; background: #e2e8f0; border-radius: 99px;
-        }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #e2e8f0; border-radius: 99px; }
         
-        /* 膠囊切換動畫 */
         .pill-transition { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        
-        /* Modal 動畫 */
         .modal-enter { opacity: 0; transform: scale(0.95); }
         .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
     </style>
 </head>
-<body class="bg-morandi-bg text-morandi-text font-sans flex flex-col h-full" id="main-body">
+<body class="bg-morandi-bg text-morandi-text font-sans" id="main-body">
 
     <div id="loading-screen" class="fixed inset-0 bg-white z-[99] flex items-center justify-center">
         <div class="flex flex-col items-center">
@@ -86,114 +74,110 @@
         </div>
     </div>
 
-    <div id="top-pane" class="flex-none h-[45%] bg-white relative z-20 flex flex-col shadow-sm">
+    <div id="top-pane" class="sticky top-0 z-40 bg-white shadow-sticky pb-4 transition-shadow duration-300">
         
-        <header class="pt-6 pb-2 text-center flex-none">
-            <h1 class="text-xl font-bold text-morandi-text tracking-wide">財務規劃藍圖</h1>
-            <p class="text-[10px] text-morandi-sub mt-0.5">資產累積與提領模擬</p>
+        <header class="pt-4 pb-2 text-center">
+            <h1 class="text-lg font-bold text-morandi-text tracking-wide">財務規劃藍圖</h1>
         </header>
 
-        <div class="flex-1 w-full px-4 relative min-h-0">
-            <canvas id="financeChart"></canvas>
+        <div class="w-full px-4 h-56 relative"> <canvas id="financeChart"></canvas>
         </div>
 
-        <div class="flex-none pb-4 px-6 flex justify-center -mt-2 relative z-30">
-            <div id="result-pill" class="pill-transition rounded-full px-5 py-2.5 shadow-lg text-white text-sm font-bold flex items-center gap-2 max-w-full">
+        <div class="flex justify-center -mt-3 relative z-50">
+            <div id="result-pill" class="pill-transition rounded-full px-5 py-2 shadow-lg text-white text-sm font-bold flex items-center gap-2">
                 <span>計算中...</span>
             </div>
         </div>
     </div>
 
-    <div id="bottom-pane" class="flex-1 overflow-y-auto bg-morandi-bg relative z-10">
-        <div class="px-6 py-6 space-y-8 pb-20"> <div class="text-center">
-                <p class="text-[10px] text-morandi-sub tracking-widest uppercase mb-1">退休日累積總資產</p>
-                <p id="result-asset" class="text-2xl font-bold text-morandi-main tracking-tight">$0</p>
-            </div>
+    <div class="px-6 py-8 space-y-8 pb-32"> <div class="text-center">
+            <p class="text-[10px] text-morandi-sub tracking-widest uppercase mb-1">退休日累積總資產</p>
+            <p id="result-asset" class="text-2xl font-bold text-morandi-main tracking-tight">$0</p>
+        </div>
 
-            <div class="space-y-6">
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-bold text-morandi-text ml-1">目前年齡</label>
-                        <input type="text" inputmode="decimal" id="age-current" value="30" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-3 text-center text-lg font-bold text-morandi-text focus:outline-none focus:border-morandi-main shadow-sm" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-bold text-morandi-text ml-1">距離退休年限</label>
-                        <input type="text" inputmode="decimal" id="years-to-retire" value="35" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-3 text-center text-lg font-bold text-morandi-text focus:outline-none focus:border-morandi-main shadow-sm" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
-                    </div>
-                </div>
-
+        <div class="space-y-6">
+            
+            <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-2">
-                    <label class="text-[11px] font-bold text-morandi-text ml-1">初始本金 (萬)</label>
-                    <div class="relative">
-                        <input type="text" inputmode="decimal" id="principal" value="100" class="w-full bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-right text-lg font-bold text-morandi-text focus:outline-none focus:border-morandi-main shadow-sm" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-morandi-sub text-xs">萬</span>
-                    </div>
+                    <label class="text-[11px] font-bold text-morandi-text ml-1">目前年齡</label>
+                    <input type="text" inputmode="decimal" id="age-current" value="30" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-3 text-center text-lg font-bold text-morandi-text focus:outline-none focus:border-morandi-main shadow-sm" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
                 </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[11px] font-bold text-morandi-text flex items-center gap-1">
-                            每月投入 (元)
-                            <button onclick="openModal('monthly')" class="text-morandi-sub hover:text-morandi-main transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.03.69 3.9 1.85 5.4.11.14.15.32.15.5v3.1c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-3.1c0-.18.04-.36.15-.5C19.31 13.9 20 12.03 20 10c0-4.42-3.58-8-8-8zm1 16h-2v-1h2v1zm0-2h-2v-1h2v1zm-1-12c3.31 0 6 2.69 6 6 0 1.94-1.05 3.65-2.63 4.63-.35.22-.57.6-.57 1.02V17h-2.8v-1.35c0-.42-.22-.8-.57-1.02C6.05 13.65 5 11.94 5 10c0-3.31 2.69-6 6-6z"/></svg></button>
-                        </label>
-                        <input type="text" id="monthly-invest" value="20,000" class="bg-transparent text-right w-24 focus:outline-none border-b border-dashed border-gray-300 focus:border-morandi-main text-lg font-bold text-morandi-text transition-colors" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
-                    </div>
-                    <input type="range" id="slider-monthly" min="0" max="100000" step="1000" value="20000" class="w-full" oninput="syncSlider('monthly-invest', this.value)">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-bold text-morandi-text ml-1">距離退休年限</label>
+                    <input type="text" inputmode="decimal" id="years-to-retire" value="35" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-3 text-center text-lg font-bold text-morandi-text focus:outline-none focus:border-morandi-main shadow-sm" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
                 </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[11px] font-bold text-morandi-text flex items-center gap-1">
-                            年化報酬率
-                            <button onclick="openModal('roi')" class="text-morandi-sub hover:text-morandi-main transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.03.69 3.9 1.85 5.4.11.14.15.32.15.5v3.1c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-3.1c0-.18.04-.36.15-.5C19.31 13.9 20 12.03 20 10c0-4.42-3.58-8-8-8zm1 16h-2v-1h2v1zm0-2h-2v-1h2v1zm-1-12c3.31 0 6 2.69 6 6 0 1.94-1.05 3.65-2.63 4.63-.35.22-.57.6-.57 1.02V17h-2.8v-1.35c0-.42-.22-.8-.57-1.02C6.05 13.65 5 11.94 5 10c0-3.31 2.69-6 6-6z"/></svg></button>
-                        </label>
-                        <div class="flex items-baseline gap-1">
-                            <input type="number" id="roi-input" value="6" step="0.5" class="bg-transparent text-right w-16 focus:outline-none border-b border-dashed border-gray-300 focus:border-morandi-main text-lg font-bold text-morandi-text transition-colors" oninput="syncRoiSlider(this.value)">
-                            <span class="text-xs text-morandi-sub">%</span>
-                        </div>
-                    </div>
-                    <input type="range" id="slider-roi" min="1" max="15" step="0.5" value="6" class="w-full" oninput="syncRoiInput(this.value)">
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[11px] font-bold text-morandi-text flex items-center gap-1">
-                            退休預期每月提領
-                            <button onclick="openModal('withdraw')" class="text-morandi-sub hover:text-morandi-main transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.03.69 3.9 1.85 5.4.11.14.15.32.15.5v3.1c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-3.1c0-.18.04-.36.15-.5C19.31 13.9 20 12.03 20 10c0-4.42-3.58-8-8-8zm1 16h-2v-1h2v1zm0-2h-2v-1h2v1zm-1-12c3.31 0 6 2.69 6 6 0 1.94-1.05 3.65-2.63 4.63-.35.22-.57.6-.57 1.02V17h-2.8v-1.35c0-.42-.22-.8-.57-1.02C6.05 13.65 5 11.94 5 10c0-3.31 2.69-6 6-6z"/></svg></button>
-                        </label>
-                        <input type="text" id="monthly-withdraw" value="50,000" class="bg-transparent text-right w-24 focus:outline-none border-b border-dashed border-gray-300 focus:border-morandi-main text-lg font-bold text-morandi-text transition-colors" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
-                    </div>
-                    <input type="range" id="slider-withdraw" min="10000" max="200000" step="5000" value="50000" class="w-full" oninput="syncSlider('monthly-withdraw', this.value)">
-                </div>
-
             </div>
 
-            <div class="pt-4 border-t border-gray-200 mt-6">
-                <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="relative flex items-center">
-                            <input type="checkbox" id="check-inflation" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-morandi-main checked:bg-morandi-main hover:border-morandi-main" onchange="toggleInflationMode()">
-                            <svg class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <div class="space-y-2">
+                <label class="text-[11px] font-bold text-morandi-text ml-1">初始本金 (萬)</label>
+                <div class="relative">
+                    <input type="text" inputmode="decimal" id="principal" value="100" class="w-full bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-right text-lg font-bold text-morandi-text focus:outline-none focus:border-morandi-main shadow-sm" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-morandi-sub text-xs">萬</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-[11px] font-bold text-morandi-text flex items-center gap-1">
+                        每月投入 (元)
+                        <button onclick="openModal('monthly')" class="text-morandi-sub hover:text-morandi-main transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.03.69 3.9 1.85 5.4.11.14.15.32.15.5v3.1c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-3.1c0-.18.04-.36.15-.5C19.31 13.9 20 12.03 20 10c0-4.42-3.58-8-8-8zm1 16h-2v-1h2v1zm0-2h-2v-1h2v1zm-1-12c3.31 0 6 2.69 6 6 0 1.94-1.05 3.65-2.63 4.63-.35.22-.57.6-.57 1.02V17h-2.8v-1.35c0-.42-.22-.8-.57-1.02C6.05 13.65 5 11.94 5 10c0-3.31 2.69-6 6-6z"/></svg></button>
+                    </label>
+                    <input type="text" id="monthly-invest" value="20,000" class="bg-transparent text-right w-24 focus:outline-none border-b border-dashed border-gray-300 focus:border-morandi-main text-lg font-bold text-morandi-text transition-colors" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
+                </div>
+                <input type="range" id="slider-monthly" min="0" max="100000" step="1000" value="20000" class="w-full" oninput="syncSlider('monthly-invest', this.value)">
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-[11px] font-bold text-morandi-text flex items-center gap-1">
+                        年化報酬率
+                        <button onclick="openModal('roi')" class="text-morandi-sub hover:text-morandi-main transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.03.69 3.9 1.85 5.4.11.14.15.32.15.5v3.1c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-3.1c0-.18.04-.36.15-.5C19.31 13.9 20 12.03 20 10c0-4.42-3.58-8-8-8zm1 16h-2v-1h2v1zm0-2h-2v-1h2v1zm-1-12c3.31 0 6 2.69 6 6 0 1.94-1.05 3.65-2.63 4.63-.35.22-.57.6-.57 1.02V17h-2.8v-1.35c0-.42-.22-.8-.57-1.02C6.05 13.65 5 11.94 5 10c0-3.31 2.69-6 6-6z"/></svg></button>
+                    </label>
+                    <div class="flex items-baseline gap-1">
+                        <input type="number" id="roi-input" value="6" step="0.5" class="bg-transparent text-right w-16 focus:outline-none border-b border-dashed border-gray-300 focus:border-morandi-main text-lg font-bold text-morandi-text transition-colors" oninput="syncRoiSlider(this.value)">
+                        <span class="text-xs text-morandi-sub">%</span>
+                    </div>
+                </div>
+                <input type="range" id="slider-roi" min="1" max="15" step="0.5" value="6" class="w-full" oninput="syncRoiInput(this.value)">
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-[11px] font-bold text-morandi-text flex items-center gap-1">
+                        退休預期每月提領
+                        <button onclick="openModal('withdraw')" class="text-morandi-sub hover:text-morandi-main transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.03.69 3.9 1.85 5.4.11.14.15.32.15.5v3.1c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-3.1c0-.18.04-.36.15-.5C19.31 13.9 20 12.03 20 10c0-4.42-3.58-8-8-8zm1 16h-2v-1h2v1zm0-2h-2v-1h2v1zm-1-12c3.31 0 6 2.69 6 6 0 1.94-1.05 3.65-2.63 4.63-.35.22-.57.6-.57 1.02V17h-2.8v-1.35c0-.42-.22-.8-.57-1.02C6.05 13.65 5 11.94 5 10c0-3.31 2.69-6 6-6z"/></svg></button>
+                    </label>
+                    <input type="text" id="monthly-withdraw" value="50,000" class="bg-transparent text-right w-24 focus:outline-none border-b border-dashed border-gray-300 focus:border-morandi-main text-lg font-bold text-morandi-text transition-colors" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
+                </div>
+                <input type="range" id="slider-withdraw" min="10000" max="200000" step="5000" value="50000" class="w-full" oninput="syncSlider('monthly-withdraw', this.value)">
+            </div>
+
+        </div>
+
+        <div class="px-6 pb-12">
+            <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="relative flex items-center">
+                        <input type="checkbox" id="check-inflation" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-morandi-main checked:bg-morandi-main hover:border-morandi-main" onchange="toggleInflationMode()">
+                        <svg class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-morandi-text">通貨膨脹 (%)</span>
+                            <button onclick="openModal('inflation')" class="text-morandi-sub hover:text-morandi-main"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></button>
                         </div>
-                        <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm font-bold text-morandi-text">通貨膨脹 (%)</span>
-                                <button onclick="openModal('inflation')" class="text-morandi-sub hover:text-morandi-main"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></button>
-                            </div>
-                            <div id="inflation-input-group" class="hidden mt-1 flex items-center gap-2 fade-in">
-                                <input type="number" id="inflation-rate" value="2.5" step="0.1" class="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-right text-xs font-bold text-morandi-text focus:outline-none focus:border-morandi-main" oninput="calc()">
-                            </div>
+                        <div id="inflation-input-group" class="hidden mt-1 flex items-center gap-2 fade-in">
+                            <input type="number" id="inflation-rate" value="2.5" step="0.1" class="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-right text-xs font-bold text-morandi-text focus:outline-none focus:border-morandi-main" oninput="calc()">
                         </div>
                     </div>
                 </div>
-
-                <p class="text-[10px] text-gray-400 text-center font-light leading-relaxed">
-                    本試算結果僅供參考，不代表對未來投資報酬之保證。<br>
-                    投資一定有風險，建議您定期檢視財務計畫。<br>
-                    Professional Planner
-                </p>
             </div>
+
+            <p class="text-[10px] text-gray-400 text-center font-light leading-relaxed">
+                本試算結果僅供參考，不代表對未來投資報酬之保證。<br>
+                投資一定有風險，建議您定期檢視財務計畫。<br>
+                Professional Planner
+            </p>
         </div>
     </div>
 
@@ -218,7 +202,6 @@
     </div>
 
     <script>
-        // 設定 Gist URL (若需啟用遙控開關功能請填入)
         const CONFIG_URL = 'YOUR_GIST_RAW_URL_HERE'; 
 
         window.onload = function() {
@@ -235,7 +218,6 @@
 
         function initApp() {
             document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
             calc(); 
         }
 
@@ -249,10 +231,7 @@
         function handleInputBlur(el) { el.value = formatMoney(parseRaw(el.value)); calc(); }
         function handleInputFocus(el) { let val = parseRaw(el.value); if(val!==0) el.value = val; el.select(); }
         
-        function syncSlider(inputId, val) { 
-            document.getElementById(inputId).value = formatMoney(val); 
-            calc(); 
-        }
+        function syncSlider(inputId, val) { document.getElementById(inputId).value = formatMoney(val); calc(); }
         function syncRoiInput(val) { document.getElementById('roi-input').value = val; calc(); }
         function syncRoiSlider(val) { document.getElementById('slider-roi').value = val; calc(); }
 
@@ -279,52 +258,30 @@
             const ageRetire = ageCurrent + yearsToRetire;
             const maxAge = 95;
 
-            // Arrays
-            let labels = [];
-            let dataAccumulate = [];
-            let dataDecumulate = [];
-            let dataReal = []; // 紅線
-            
-            // Nominal Loop Vars
+            let labels = [], dataAccumulate = [], dataDecumulate = [], dataReal = [];
             let currentAsset = principal;
-            // Real Line Vars (Starts same as principal)
-            let realAsset = principal;
+            let realScenarioAsset = principal;
             
-            // 1. 累積期 (Accumulation)
+            // 1. Accumulation
             for (let i = 0; i <= yearsToRetire; i++) {
                 labels.push((ageCurrent + i));
-                
-                // Nominal Calculation (Bar Chart)
                 dataAccumulate.push(currentAsset);
                 dataDecumulate.push(null);
                 
-                // Real Calculation (Red Line) - logic: just tracking value, maybe discounted?
-                // Actually, in accumulation, Real Value = Nominal Value (if we assume contributions increase with inflation)
-                // BUT user wants "Red line drops".
-                // Let's stick to the core "Inflated Withdrawal" logic for the red line drop later.
-                // For simplicity in accumulation: Real Line tracks Nominal closely OR discounted?
-                // User requirement: "Red line... significantly lower".
-                // Let's use simple discounting for the red line to show "Purchasing Power"
-                dataReal.push(currentAsset / Math.pow(1 + inflationRate, i));
+                // Real Line (Accumulation)
+                dataReal.push(currentAsset); 
 
-                // Compounding
                 let annualContrib = monthlyInvest * 12;
                 currentAsset = currentAsset * (1 + roi) + annualContrib;
+                realScenarioAsset = currentAsset; // Synced during accumulation
             }
 
             const assetAtRetirement = dataAccumulate[dataAccumulate.length - 1];
             document.getElementById('result-asset').textContent = '$' + formatMoney(assetAtRetirement);
 
-            // 2. 提領期 (Decumulation)
+            // 2. Decumulation
             let yearsInRetirement = maxAge - ageRetire;
-            
-            // Nominal Withdrawal (Fixed)
             let nominalWithdrawal = monthlyWithdrawRaw * 12;
-            
-            // Real Withdrawal (Growing with inflation) - used for the Red Line scenario
-            // *Crucial*: To show the Red Line dropping faster, we must simulate the asset being drained by INFLATED withdrawals.
-            // We need a separate asset tracker for the Red Line scenario.
-            let realScenarioAsset = currentAsset; // Start from same pot
             let inflatedWithdrawal = nominalWithdrawal * Math.pow(1 + inflationRate, yearsToRetire); 
 
             let depletedAgeNominal = null;
@@ -333,18 +290,13 @@
             for (let i = 1; i <= yearsInRetirement; i++) {
                 labels.push((ageRetire + i));
                 
-                // A. Nominal Path (Green/Gold Bars) - Fixed Withdrawal
                 currentAsset = currentAsset * (1 + roi) - nominalWithdrawal;
                 
-                // B. Real Path (Red Line) - Inflated Withdrawal
-                // Note: We don't discount this value anymore, we show the "Balance remaining if you spend inflated amounts"
-                // This is the "Scenario B" logic.
                 realScenarioAsset = realScenarioAsset * (1 + roi) - inflatedWithdrawal;
-                inflatedWithdrawal *= (1 + inflationRate); // Expenses grow next year
+                inflatedWithdrawal *= (1 + inflationRate);
 
                 dataAccumulate.push(null);
 
-                // Nominal Data Push
                 if (currentAsset > 0) {
                     dataDecumulate.push(currentAsset);
                 } else {
@@ -352,7 +304,6 @@
                     if (!depletedAgeNominal) depletedAgeNominal = ageRetire + i;
                 }
 
-                // Real Data Push
                 if (realScenarioAsset > 0) {
                     dataReal.push(realScenarioAsset);
                 } else {
@@ -368,17 +319,14 @@
         function updateConclusion(depletedNominal, depletedReal, finalNominal, finalReal) {
             const pill = document.getElementById('result-pill');
             
-            // Determine which result to show based on mode
             const isDead = isInflationMode ? depletedReal : depletedNominal;
             const finalVal = isInflationMode ? finalReal : finalNominal;
 
             if (isDead) {
-                // Danger
-                pill.className = "pill-transition rounded-full px-5 py-2.5 shadow-lg text-white text-sm font-bold flex items-center gap-2 max-w-full bg-[#E57373]";
+                pill.className = "pill-transition rounded-full px-5 py-2 shadow-lg text-white text-sm font-bold flex items-center gap-2 max-w-full bg-[#E57373]";
                 pill.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" /></svg><span>資產將在 ${isDead} 歲用盡</span>`;
             } else {
-                // Safe
-                pill.className = "pill-transition rounded-full px-5 py-2.5 shadow-lg text-white text-sm font-bold flex items-center gap-2 max-w-full bg-[#7C8E7F]";
+                pill.className = "pill-transition rounded-full px-5 py-2 shadow-lg text-white text-sm font-bold flex items-center gap-2 max-w-full bg-[#7C8E7F]";
                 pill.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg><span>95歲剩餘：$${formatMoney(finalVal)}</span>`;
             }
         }
@@ -389,32 +337,19 @@
 
             const datasets = [
                 {
-                    type: 'bar',
-                    label: '累積期',
-                    data: dataAccumulate,
-                    backgroundColor: '#7C8E7F', 
-                    barPercentage: 1.0, categoryPercentage: 1.0, order: 3
+                    type: 'bar', label: '累積期', data: dataAccumulate,
+                    backgroundColor: '#7C8E7F', barPercentage: 1.0, categoryPercentage: 1.0, order: 3
                 },
                 {
-                    type: 'bar',
-                    label: '提領期',
-                    data: dataDecumulate,
-                    backgroundColor: '#CDB895',
-                    barPercentage: 1.0, categoryPercentage: 1.0, order: 2
+                    type: 'bar', label: '提領期', data: dataDecumulate,
+                    backgroundColor: '#CDB895', barPercentage: 1.0, categoryPercentage: 1.0, order: 2
                 }
             ];
 
             if (isInflationMode) {
                 datasets.push({
-                    type: 'line',
-                    label: '通膨影響下',
-                    data: dataReal,
-                    borderColor: '#9B3B3B',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0.4,
-                    order: 1
+                    type: 'line', label: '通膨影響下', data: dataReal,
+                    borderColor: '#9B3B3B', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4, order: 1
                 });
             }
 
