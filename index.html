@@ -18,9 +18,9 @@
                             text: '#6B6576',    // 深灰紫 (內文)
                             sub: '#A9A1B9',     // 淺灰紫 (次要)
                             
-                            // [Updated] 理想模式主色 (灰紫)
+                            // 理想模式主色 (灰紫)
                             ideal: '#8E8797',
-                            // [Updated] 通膨模式主色 (柔和紅)
+                            // 通膨模式主色 (柔和紅)
                             real: '#CE6A6A' 
                         },
                         chart: {
@@ -77,9 +77,9 @@
 
     <div id="top-pane" class="flex-none h-[45%] bg-white relative z-20 flex flex-col shadow-sm border-b border-gray-100">
         
-        <header id="header-bg" class="pt-5 pb-2 text-center flex-none bg-morandi-ideal text-white theme-transition">
-            <h1 class="text-lg font-bold tracking-wide">財務規劃藍圖</h1>
-            <p class="text-[10px] opacity-80 mt-0.5">資產累積與提領模擬</p>
+        <header id="header-bg" class="py-3 text-center flex-none bg-morandi-ideal text-white theme-transition">
+            <h1 class="text-base font-bold tracking-wide">財務規劃藍圖</h1>
+            <p class="text-[9px] opacity-80">資產累積與提領模擬</p>
         </header>
 
         <div class="flex-1 w-full px-2 relative min-h-0 flex items-center justify-center">
@@ -240,7 +240,6 @@
             document.getElementById('loading-screen').innerHTML = `<div class="p-8 text-center"><h1 class="text-2xl font-bold mb-4 text-gray-800">服務維護中</h1><p class="text-gray-500">${msg || '請稍後再試'}</p></div>`;
         }
 
-        // Tools
         function parseRaw(str) { if(!str) return 0; return parseFloat(str.toString().replace(/,/g, '')) || 0; }
         function formatMoney(num) { return Math.round(num).toLocaleString('en-US'); }
         function handleInputBlur(el) { el.value = formatMoney(parseRaw(el.value)); calc(); }
@@ -250,7 +249,6 @@
         function syncRoiInput(val) { document.getElementById('roi-input').value = val; calc(); }
         function syncRoiSlider(val) { document.getElementById('slider-roi').value = val; calc(); }
 
-        // Logic
         let chartInstance = null;
         let isInflationMode = false;
 
@@ -267,13 +265,12 @@
             const themeElements = document.querySelectorAll('.theme-text');
             const iconBtns = document.querySelectorAll('.icon-btn');
             
-            const idealColor = '#8E8797'; // [Updated]
-            const realColor = '#CE6A6A'; // [Updated]
+            const idealColor = '#8E8797';
+            const realColor = '#CE6A6A'; 
 
             if (isInflationMode) {
-                // Real Mode 
                 header.classList.remove('bg-morandi-ideal');
-                header.style.backgroundColor = realColor; // 直接強制改色
+                header.style.backgroundColor = realColor; 
                 
                 document.body.style.setProperty('--current-theme', realColor);
                 themeElements.forEach(el => el.style.color = realColor);
@@ -281,7 +278,6 @@
                 document.querySelectorAll('input[type=range]').forEach(el => el.style.color = realColor);
                 
             } else {
-                // Ideal Mode 
                 header.style.backgroundColor = idealColor;
                 header.classList.add('bg-morandi-ideal');
                 
@@ -310,7 +306,6 @@
             let dataReal = []; 
             
             let currentAsset = principal;
-            let realScenarioAsset = principal;
             
             // 1. Accumulation
             for (let i = 0; i <= yearsToRetire; i++) {
@@ -419,7 +414,12 @@
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': $' + formatMoney(c.raw) } }
+                        tooltip: { 
+                            callbacks: { 
+                                label: c => ' 總資產: ' + formatMoney(c.raw),
+                                title: t => t[0].label + '歲' 
+                            } 
+                        }
                     },
                     scales: {
                         x: { 
@@ -446,8 +446,8 @@
 
         const modalData = {
             'years': { title: '距離退休年限', content: `<p>這是一個重要的分水嶺，決定了上方圖表的顏色分佈：</p><ul class="list-disc pl-5 mt-2 space-y-2"><li class="text-[#7C8E7F]"><strong>綠色長條 (累積期)：</strong>代表退休前。靠工作收入與複利讓資產成長。</li><li class="text-[#CDB895]"><strong>金色長條 (提領期)：</strong>代表退休後。停止工作收入，開始消耗資產。</li></ul>` },
-            'monthly': { title: '每月投入 (元)', content: `<p>指您每月扣除生活必要開銷與房貸後，能穩定撥出用於投資的閒置資金。</p><div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-3"><p class="font-bold text-[#6B6576] text-xs mb-1">💡 專家建議：</p><p class="text-xs text-gray-500">在設定此金額前，請確認您已預留 3-6 個月的緊急預備金，且這筆資金是未來 10 年內不需要動用的長錢。</p></div>` },
-            'roi': { title: '年化報酬率 (%)', content: `<p>指投資組合長期的幾何平均年成長率。這不是單一年度的報酬，而是拉長 10 年以上的平均表現。</p><p class="font-bold text-[#6B6576] mt-4 mb-2">📊 歷史數據參考：</p><ul class="space-y-2 text-sm"><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#7C8E7F]"></span><span><strong>保守型 (債券)：</strong>約 3% ~ 4%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#555DA9]"></span><span><strong>穩健型 (股債)：</strong>約 5% ~ 6%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#CDB895]"></span><span><strong>積極型 (股票)：</strong>約 7% ~ 9%</span></li></ul>` },
+            'monthly': { title: '每月投入 (元)', content: `<p>指您每月扣除生活必要開銷與房貸後，能穩定撥出用於投資的閒置資金。</p><div class="bg-orange-50 p-3 rounded-lg border border-orange-200 mt-3"><p class="font-bold text-orange-800 text-xs mb-1">⚠️ 注意：資金規則</p><p class="text-xs text-orange-700">此投入金額將計算至「退休日」為止。系統設定退休後即停止投入，轉為純提領模式。</p></div><div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-3"><p class="font-bold text-[#6B6576] text-xs mb-1">💡 專家建議：</p><p class="text-xs text-gray-500">在設定此金額前，請確認您已預留 3-6 個月的緊急預備金，且這筆資金是未來 10 年內不需要動用的長錢。</p></div>` },
+            'roi': { title: '年化報酬率 (%)', content: `<p>指投資組合長期的幾何平均年成長率。</p><p class="font-bold text-[#6B6576] mt-4 mb-2">📊 歷史數據參考：</p><ul class="space-y-2 text-sm"><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#7C8E7F]"></span><span><strong>保守型 (債券)：</strong>約 3% ~ 4%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#555DA9]"></span><span><strong>穩健型 (股債)：</strong>約 5% ~ 6%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#CDB895]"></span><span><strong>積極型 (股票)：</strong>約 7% ~ 9%</span></li></ul>` },
             'withdraw': { title: '退休後每月提領', content: `<p>您預計在退休後，每個月需要從資產中提領多少錢來支付生活開銷。</p><p class="mt-2 text-xs text-gray-500">建議參考目前的月薪或生活費，並考量未來是否會有房貸繳清或醫療增加等變數。</p>` },
             'inflation': { title: '為什麼要考慮通膨？', content: `<p>物價會隨時間上漲，導致貨幣的「實質購買力」下降。</p><p class="font-bold text-[#6B6576] mt-3">勾選此項後：</p><ul class="list-disc pl-5 space-y-2 mt-2 text-sm"><li class="text-[#9B3B3B]"><strong>紅色折線出現：</strong>代表考慮通膨後的真實資產壽命。</li><li><strong>提領門檻變高：</strong>系統會自動計算退休時的物價水準，大幅提高您所需的每月生活費，這通常會導致資產比預期更早耗盡。</li></ul>` }
         };
