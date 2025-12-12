@@ -310,7 +310,6 @@
                 dataAccumulate.push(currentAsset);
                 dataDecumulate.push(null);
                 
-                // Real Line Calculation (Accumulation phase - Discounting)
                 let realVal = currentAsset / Math.pow(1 + inflationRate, i);
                 dataReal.push(realVal); 
 
@@ -428,7 +427,11 @@
                                 label: function(context) {
                                     let value = context.parsed.y;
                                     if (value === null || value <= 0) return null;
-                                    return ' ' + '$' + Math.round(value).toLocaleString('en-US');
+                                    // 若是紅線 (dataset index 2 或是 type='line')
+                                    if (context.dataset.type === 'line') {
+                                        return ' 實質: $' + Math.round(value).toLocaleString('en-US');
+                                    }
+                                    return ' 帳面: $' + Math.round(value).toLocaleString('en-US');
                                 }
                             }
                         }
@@ -459,7 +462,21 @@
         const modalData = {
             'years': { title: '距離退休年限', content: `<p>這是一個重要的分水嶺，決定了上方圖表的顏色分佈：</p><ul class="list-disc pl-5 mt-2 space-y-2"><li class="text-[#7C8E7F]"><strong>綠色長條 (累積期)：</strong>代表退休前。靠工作收入與複利讓資產成長。</li><li class="text-[#CDB895]"><strong>金色長條 (提領期)：</strong>代表退休後。停止工作收入，開始消耗資產。</li></ul>` },
             'monthly': { title: '每月投入 (元)', content: `<p>指您每月扣除生活必要開銷與房貸後，能穩定撥出用於投資的閒置資金。</p><div class="bg-orange-50 p-3 rounded-lg border border-orange-200 mt-3"><p class="font-bold text-orange-800 text-xs mb-1">⚠️ 注意：資金規則</p><p class="text-xs text-orange-700">此投入金額將計算至「退休日」為止。系統設定退休後即停止投入，轉為純提領模式。</p></div><div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-3"><p class="font-bold text-[#6B6576] text-xs mb-1">💡 專家建議：</p><p class="text-xs text-gray-500">在設定此金額前，請確認您已預留 3-6 個月的緊急預備金，且這筆資金是未來 10 年內不需要動用的長錢。</p></div>` },
-            'roi': { title: '年化報酬率 (%)', content: `<p>指投資組合長期的幾何平均年成長率。</p><p class="font-bold text-[#6B6576] mt-4 mb-2">📊 歷史數據參考：</p><ul class="space-y-2 text-sm"><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#7C8E7F]"></span><span><strong>保守型 (債券)：</strong>約 3% ~ 4%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#555DA9]"></span><span><strong>穩健型 (股債)：</strong>約 5% ~ 6%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#CDB895]"></span><span><strong>積極型 (股票)：</strong>約 7% ~ 9%</span></li></ul>` },
+            'roi': { 
+                title: '預計年化報酬率 (%)', 
+                content: `<p>指投資組合長期的平均年成長率。這不是單一年度的報酬（會有漲跌），而是拉長 10~20 年以上的平均表現。</p>
+                          <p class="font-bold text-[#6B6576] mt-4 mb-2">⚠️ 為什麼這很重要？</p>
+                          <ul class="list-disc pl-5 space-y-2 text-sm">
+                            <li><strong>複利效應：</strong>報酬率差 1% 看似很少，但經過 30 年複利滾存，資產總額可能相差數百萬甚至倍增。</li>
+                            <li><strong>全期適用：</strong>此設定將應用於您的一生。不僅是退休前存錢會增值，<strong>退休後未提領的資產，也會繼續以此報酬率在市場中滾存生息</strong>，延緩資產耗盡的速度。</li>
+                          </ul>
+                          <p class="font-bold text-[#6B6576] mt-4 mb-2">📊 歷史數據參考：</p>
+                          <ul class="space-y-2 text-sm">
+                            <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#7C8E7F]"></span><span><strong>保守型 (債券)：</strong>約 3% ~ 4%</span></li>
+                            <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#555DA9]"></span><span><strong>穩健型 (股債)：</strong>約 5% ~ 6%</span></li>
+                            <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#CDB895]"></span><span><strong>積極型 (股票)：</strong>約 7% ~ 9%</span></li>
+                          </ul>` 
+            },
             'withdraw': { title: '退休後每月提領', content: `<p>您預計在退休後，每個月需要從資產中提領多少錢來支付生活開銷。</p><p class="mt-2 text-xs text-gray-500">建議參考目前的月薪或生活費，並考量未來是否會有房貸繳清或醫療增加等變數。</p>` },
             'inflation': { title: '為什麼要考慮通膨？', content: `<p>物價會隨時間上漲，導致貨幣的「實質購買力」下降。</p><p class="font-bold text-[#6B6576] mt-3">勾選此項後：</p><ul class="list-disc pl-5 space-y-2 mt-2 text-sm"><li class="text-[#9B3B3B]"><strong>紅色折線出現：</strong>代表考慮通膨後的真實資產壽命。</li><li><strong>提領門檻變高：</strong>系統會自動計算退休時的物價水準，大幅提高您所需的每月生活費，這通常會導致資產比預期更早耗盡。</li></ul>` }
         };
