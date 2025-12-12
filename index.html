@@ -17,16 +17,13 @@
                             bg: '#f7f7fa',      
                             text: '#6B6576',    // 深灰紫 (內文)
                             sub: '#A9A1B9',     // 淺灰紫 (次要)
-                            
-                            // 理想模式主色 (灰紫)
-                            ideal: '#8E8797',
-                            // 通膨模式主色 (柔和紅)
-                            real: '#CE6A6A' 
+                            ideal: '#8E8797',   // 理想主色 (灰紫)
+                            real: '#CE6A6A'     // 通膨主色 (柔和紅)
                         },
                         chart: {
                             acc: '#7C8E7F', // 綠
                             dec: '#CDB895', // 金
-                            inf: '#9B3B3B'  // 深紅線
+                            inf: '#9B3B3B'  // 深紅
                         },
                         status: {
                             safe: '#7C8E7F', 
@@ -77,7 +74,7 @@
 
     <div id="top-pane" class="flex-none h-[45%] bg-white relative z-20 flex flex-col shadow-sm border-b border-gray-100">
         
-        <header id="header-bg" class="py-3 text-center flex-none bg-morandi-ideal text-white theme-transition">
+        <header id="header-bg" class="pt-5 pb-2 text-center flex-none bg-morandi-ideal text-white theme-transition">
             <h1 class="text-base font-bold tracking-wide">財務規劃藍圖</h1>
             <p class="text-[9px] opacity-80">資產累積與提領模擬</p>
         </header>
@@ -313,6 +310,7 @@
                 dataAccumulate.push(currentAsset);
                 dataDecumulate.push(null);
                 
+                // Real Line Calculation (Accumulation phase - Discounting)
                 let realVal = currentAsset / Math.pow(1 + inflationRate, i);
                 dataReal.push(realVal); 
 
@@ -414,11 +412,25 @@
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { 
-                            callbacks: { 
-                                label: c => ' 總資產: ' + formatMoney(c.raw),
-                                title: t => t[0].label + '歲' 
-                            } 
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#6B6576',
+                            bodyColor: '#6B6576',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 10,
+                            boxPadding: 4,
+                            usePointStyle: true,
+                            callbacks: {
+                                title: function(context) {
+                                    return context[0].label + '歲';
+                                },
+                                label: function(context) {
+                                    let value = context.parsed.y;
+                                    if (value === null || value <= 0) return null;
+                                    return ' ' + '$' + Math.round(value).toLocaleString('en-US');
+                                }
+                            }
                         }
                     },
                     scales: {
