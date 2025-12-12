@@ -15,15 +15,18 @@
                     colors: {
                         morandi: { 
                             bg: '#f7f7fa',      
-                            text: '#6B6576',    
-                            sub: '#A9A1B9',     
-                            ideal: '#555DA9',
-                            real: '#ea580c' 
+                            text: '#6B6576',    // 深灰紫 (內文)
+                            sub: '#A9A1B9',     // 淺灰紫 (次要)
+                            
+                            // [Updated] 理想模式主色 (灰紫)
+                            ideal: '#8E8797',
+                            // [Updated] 通膨模式主色 (柔和紅)
+                            real: '#CE6A6A' 
                         },
                         chart: {
-                            acc: '#7C8E7F', 
-                            dec: '#CDB895', 
-                            inf: '#9B3B3B'  
+                            acc: '#7C8E7F', // 綠
+                            dec: '#CDB895', // 金
+                            inf: '#9B3B3B'  // 深紅線
                         },
                         status: {
                             safe: '#7C8E7F', 
@@ -74,7 +77,7 @@
 
     <div id="top-pane" class="flex-none h-[45%] bg-white relative z-20 flex flex-col shadow-sm border-b border-gray-100">
         
-        <header id="header-bg" class="pt-5 pb-2 text-center flex-none bg-gradient-to-br from-morandi-ideal to-[#7c3aed] text-white theme-transition">
+        <header id="header-bg" class="pt-5 pb-2 text-center flex-none bg-morandi-ideal text-white theme-transition">
             <h1 class="text-lg font-bold tracking-wide">財務規劃藍圖</h1>
             <p class="text-[10px] opacity-80 mt-0.5">資產累積與提領模擬</p>
         </header>
@@ -103,12 +106,14 @@
             <div class="space-y-6">
                 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-bold text-morandi-text ml-1">目前年齡</label>
+                    <div class="space-y-2 flex flex-col">
+                        <div class="flex items-center h-5"> 
+                            <label class="text-[11px] font-bold text-morandi-text ml-1">目前年齡</label>
+                        </div>
                         <input type="text" inputmode="decimal" id="age-current" value="30" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-3 text-center text-lg font-bold theme-text focus:outline-none focus:ring-1 focus:ring-current shadow-sm transition-colors" onblur="handleInputBlur(this)" onfocus="handleInputFocus(this)">
                     </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
+                    <div class="space-y-2 flex flex-col">
+                        <div class="flex items-center justify-between h-5">
                             <label class="text-[11px] font-bold text-morandi-text ml-1">距離退休年限</label>
                             <button onclick="openModal('years')" class="icon-btn text-morandi-sub hover:text-current transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.03.69 3.9 1.85 5.4.11.14.15.32.15.5v3.1c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-3.1c0-.18.04-.36.15-.5C19.31 13.9 20 12.03 20 10c0-4.42-3.58-8-8-8zm1 16h-2v-1h2v1zm0-2h-2v-1h2v1zm-1-12c3.31 0 6 2.69 6 6 0 1.94-1.05 3.65-2.63 4.63-.35.22-.57.6-.57 1.02V17h-2.8v-1.35c0-.42-.22-.8-.57-1.02C6.05 13.65 5 11.94 5 10c0-3.31 2.69-6 6-6z"/></svg></button>
                         </div>
@@ -262,27 +267,27 @@
             const themeElements = document.querySelectorAll('.theme-text');
             const iconBtns = document.querySelectorAll('.icon-btn');
             
-            const idealColor = '#555DA9';
-            const realColor = '#ea580c'; 
+            const idealColor = '#8E8797'; // [Updated]
+            const realColor = '#CE6A6A'; // [Updated]
 
             if (isInflationMode) {
                 // Real Mode 
-                header.classList.remove('from-morandi-ideal', 'to-[#7c3aed]');
-                header.classList.add('from-[#ea580c]', 'to-[#c2410c]');
+                header.classList.remove('bg-morandi-ideal');
+                header.style.backgroundColor = realColor; // 直接強制改色
                 
                 document.body.style.setProperty('--current-theme', realColor);
                 themeElements.forEach(el => el.style.color = realColor);
-                iconBtns.forEach(el => el.classList.add('hover:text-[#ea580c]'));
+                iconBtns.forEach(el => el.classList.add('hover:text-[#CE6A6A]'));
                 document.querySelectorAll('input[type=range]').forEach(el => el.style.color = realColor);
                 
             } else {
                 // Ideal Mode 
-                header.classList.remove('from-[#ea580c]', 'to-[#c2410c]');
-                header.classList.add('from-morandi-ideal', 'to-[#7c3aed]');
+                header.style.backgroundColor = idealColor;
+                header.classList.add('bg-morandi-ideal');
                 
                 document.body.style.setProperty('--current-theme', idealColor);
                 themeElements.forEach(el => el.style.color = idealColor);
-                iconBtns.forEach(el => el.classList.remove('hover:text-[#ea580c]'));
+                iconBtns.forEach(el => el.classList.remove('hover:text-[#CE6A6A]'));
                 document.querySelectorAll('input[type=range]').forEach(el => el.style.color = idealColor);
             }
         }
@@ -305,8 +310,7 @@
             let dataReal = []; 
             
             let currentAsset = principal;
-            // *修正點*：實質資產在第一年也需要被折現嗎？通常第一年=名目。但隨著時間 i 增加，分母變大。
-            // 這裡我們直接計算「該年度的購買力」。
+            let realScenarioAsset = principal;
             
             // 1. Accumulation
             for (let i = 0; i <= yearsToRetire; i++) {
@@ -314,9 +318,6 @@
                 dataAccumulate.push(currentAsset);
                 dataDecumulate.push(null);
                 
-                // *修正點*：累積期也計算購買力折現
-                // 如果通膨率為 0 (未勾選)，則分母為 1，紅線與綠線重疊。
-                // 如果通膨率 > 0，則 i 越大，實質價值越低。
                 let realVal = currentAsset / Math.pow(1 + inflationRate, i);
                 dataReal.push(realVal); 
 
@@ -329,57 +330,8 @@
 
             // 2. Decumulation
             let yearsInRetirement = maxAge - ageRetire;
-            
-            // 提領期計算：這裡有兩種邏輯
-            // A. 紅線繼續代表「名目資產的購買力折現」 (Consistent Logic)
-            // B. 紅線代表「如果提領金額隨通膨增加，資產會剩多少」 (Scenario Logic)
-            // 為了視覺警示效果 (提早歸零)，我們採用 B 邏輯 (Scenario Logic)。
-            // 但為了讓線條連續，我們需要一個過渡。
-            // 我們採用最直觀的「購買力折現」邏輯 (A)，這樣線條在退休點不會斷裂，且持續下降。
-            // 並且，為了顯示「提早用盡」，我們在計算 Real Asset 時，採用「通膨調整後的提領額」。
-            
-            // 重新定義 Real Asset 軌跡：從退休那一年開始，模擬真實世界(支出增加)
-            let realScenarioAsset = currentAsset; // 接續退休那年的名目餘額
-            // 但這個餘額已經是名目了，它的購買力其實已經縮水了。
-            // 所以我們繼續沿用「名目餘額 / 折現因子」的畫法？
-            // 不，使用者想看的是「會不會提早用完」。
-            // 所以紅線應該是「情境模擬線」。
-            // 在累積期：情境線 = 名目線 (假設投入也隨通膨增加? 或是簡單折現?)
-            // 為了符合您「紅線在累積期就低於綠線」的要求，累積期必須是「折現」。
-            // 但到了提領期，如果繼續折現，紅線會趨近於0但不會變負(除非名目變負)。
-            // 要顯示「提早用完」，必須是「資產扣得比較快」。
-            
-            // *最終邏輯整合*：
-            // 累積期：紅線 = 名目資產折現 (顯示購買力縮水)。
-            // 提領期：紅線 = 模擬「支出隨通膨增加」的資產餘額 (顯示壽命縮短)。
-            // 為了讓這兩條線在退休點「接起來」，我們在退休點重置 Real Asset 為「當下的名目餘額」(因為那是你存摺裡的錢)。
-            // 等等，這樣會有跳動。
-            // *修正*：整條紅線統一代表「實質購買力 (Purchasing Power)」。
-            // 提領期：名目資產 - 固定提領 = 名目餘額。 紅線 = 名目餘額 / (1+通膨)^n。
-            // 這樣紅線永遠不會比綠線早歸零 (數學上)。
-            // *使用者需求*：要看到「資產提早用盡」。
-            // 因此，紅線必須代表「名目資產 - 膨脹提領」的餘額軌跡。
-            // 那累積期呢？如果要顯示購買力縮水，又要能接上提領期的邏輯...
-            // 妥協方案：累積期畫「折現 (購買力)」，提領期畫「情境 (壽命)」。
-            // 為了視覺連續，我們讓紅線在累積期 = 折現。在退休點，它的數值是「退休時的實質購買力」。
-            // 進入提領期後，我們從這個「實質購買力」開始扣除「實質提領額 (即目前的 5 萬)」。
-            // 這樣邏輯就通了！全程使用「實質 (Real)」計價。
-            
-            // 重算一次 Real Line (全期實質法)
-            // 累積期：每月投入 2 萬 (這是名目值)。實質投入 = 2萬 / (1+r)^t
-            // 這樣太複雜。
-            
-            // *採用您最直觀的視覺需求*：
-            // 累積期：紅線 = 名目 / 折現 (顯示錢變薄)。
-            // 提領期：紅線 = 模擬「名目餘額 - 膨脹提領」的結果。
-            // 這樣在退休點會有一個斷層 (名目 vs 折現)。
-            // 解決斷層：提領期的紅線起始點，設為累積期紅線的終點。
-            // 然後從這個點開始扣除「實質提領額 (5萬)」。
-            // 這樣線條就是連續的，且邏輯一致 (全實質)。
-            
-            // 重新執行 Loop 2 (Decumulation)
-            let realAssetCursor = dataReal[dataReal.length - 1]; // 接續累積期的最後一點
-            let realMonthlyWithdraw = monthlyWithdrawRaw * 12; // 實質提領額固定為 5 萬 (購買力不變)
+            let realAssetCursor = dataReal[dataReal.length - 1]; 
+            let realMonthlyWithdraw = monthlyWithdrawRaw * 12; 
 
             let nominalWithdrawal = monthlyWithdrawRaw * 12;
             let depletedAgeNominal = null;
@@ -388,11 +340,8 @@
             for (let i = 1; i <= yearsInRetirement; i++) {
                 labels.push((ageRetire + i));
                 
-                // Nominal (Green/Gold)
                 currentAsset = currentAsset * (1 + roi) - nominalWithdrawal;
                 
-                // Real (Red) - 全實質運算
-                // 資產成長率也要調整為實質報酬率: (1+roi)/(1+inf) - 1
                 let realRate = (1 + roi) / (1 + inflationRate) - 1;
                 realAssetCursor = realAssetCursor * (1 + realRate) - realMonthlyWithdraw;
 
@@ -498,7 +447,7 @@
         const modalData = {
             'years': { title: '距離退休年限', content: `<p>這是一個重要的分水嶺，決定了上方圖表的顏色分佈：</p><ul class="list-disc pl-5 mt-2 space-y-2"><li class="text-[#7C8E7F]"><strong>綠色長條 (累積期)：</strong>代表退休前。靠工作收入與複利讓資產成長。</li><li class="text-[#CDB895]"><strong>金色長條 (提領期)：</strong>代表退休後。停止工作收入，開始消耗資產。</li></ul>` },
             'monthly': { title: '每月投入 (元)', content: `<p>指您每月扣除生活必要開銷與房貸後，能穩定撥出用於投資的閒置資金。</p><div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-3"><p class="font-bold text-[#6B6576] text-xs mb-1">💡 專家建議：</p><p class="text-xs text-gray-500">在設定此金額前，請確認您已預留 3-6 個月的緊急預備金，且這筆資金是未來 10 年內不需要動用的長錢。</p></div>` },
-            'roi': { title: '年化報酬率 (%)', content: `<p>指投資組合長期的幾何平均年成長率。</p><p class="font-bold text-[#6B6576] mt-4 mb-2">📊 歷史數據參考：</p><ul class="space-y-2 text-sm"><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#7C8E7F]"></span><span><strong>保守型 (債券)：</strong>約 3% ~ 4%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#555DA9]"></span><span><strong>穩健型 (股債)：</strong>約 5% ~ 6%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#CDB895]"></span><span><strong>積極型 (股票)：</strong>約 7% ~ 9%</span></li></ul>` },
+            'roi': { title: '年化報酬率 (%)', content: `<p>指投資組合長期的幾何平均年成長率。這不是單一年度的報酬，而是拉長 10 年以上的平均表現。</p><p class="font-bold text-[#6B6576] mt-4 mb-2">📊 歷史數據參考：</p><ul class="space-y-2 text-sm"><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#7C8E7F]"></span><span><strong>保守型 (債券)：</strong>約 3% ~ 4%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#555DA9]"></span><span><strong>穩健型 (股債)：</strong>約 5% ~ 6%</span></li><li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#CDB895]"></span><span><strong>積極型 (股票)：</strong>約 7% ~ 9%</span></li></ul>` },
             'withdraw': { title: '退休後每月提領', content: `<p>您預計在退休後，每個月需要從資產中提領多少錢來支付生活開銷。</p><p class="mt-2 text-xs text-gray-500">建議參考目前的月薪或生活費，並考量未來是否會有房貸繳清或醫療增加等變數。</p>` },
             'inflation': { title: '為什麼要考慮通膨？', content: `<p>物價會隨時間上漲，導致貨幣的「實質購買力」下降。</p><p class="font-bold text-[#6B6576] mt-3">勾選此項後：</p><ul class="list-disc pl-5 space-y-2 mt-2 text-sm"><li class="text-[#9B3B3B]"><strong>紅色折線出現：</strong>代表考慮通膨後的真實資產壽命。</li><li><strong>提領門檻變高：</strong>系統會自動計算退休時的物價水準，大幅提高您所需的每月生活費，這通常會導致資產比預期更早耗盡。</li></ul>` }
         };
